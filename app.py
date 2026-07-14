@@ -1,5 +1,5 @@
 import streamlit as st
-import google.generativeai as genai
+import anthropic
 
 st.set_page_config(
     page_title="Peers Content Studio",
@@ -357,11 +357,12 @@ def contar_caracteres(texto):
     return len(texto)
 
 
-def chamar_gemini(api_key, prompt, artigo):
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-2.0-flash")
-    response = model.generate_content(prompt + artigo)
-    return response.text
+def chamar_api(api_key, prompt, artigo):
+    
+    
+    client = anthropic.Anthropic(api_key=api_key)
+    message = client.messages.create(model="claude-sonnet-4-6", max_tokens=4000, messages=[{"role": "user", "content": prompt + artigo}])
+    return message.content[0].text
 
 
 # Header
@@ -378,7 +379,7 @@ st.markdown("""
 # Sidebar
 with st.sidebar:
     st.markdown('<div class="sidebar-section-title">Configuração</div>', unsafe_allow_html=True)
-    api_key = st.text_input("Chave de API Gemini", type="password", placeholder="AIza...")
+    api_key = st.text_input("Chave de API Anthropic", type="password", placeholder="sk-ant-...")
     st.markdown("""
     <div class="sidebar-info">
         🔒 A chave fica salva só no seu navegador. Nunca enviada para servidores externos.
@@ -387,7 +388,7 @@ with st.sidebar:
 
     st.markdown("---")
     st.markdown('<div class="sidebar-section-title">Como obter a chave</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sidebar-desc">Acesse <strong style="color:#D8E8EE;">aistudio.google.com</strong>, faça login com sua conta Google, clique em <strong style="color:#D8E8EE;">"Get API key"</strong> e copie a chave gerada.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-desc">Acesse <strong style="color:#D8E8EE;">console.anthropic.com</strong>, faça login com sua conta Google, clique em <strong style="color:#D8E8EE;">"API Keys" e clique em "Create Key"</strong> e copie a chave gerada.</div>', unsafe_allow_html=True)
 
     st.markdown("---")
     st.markdown('<div class="sidebar-section-title">Sobre</div>', unsafe_allow_html=True)
@@ -427,7 +428,7 @@ with tab1:
         else:
             with st.spinner("Analisando artigo..."):
                 try:
-                    resultado = chamar_gemini(api_key, PROMPT_SCORE, artigo_score)
+                    resultado = chamar_api(api_key, PROMPT_SCORE, artigo_score)
                     st.markdown("---")
                     st.markdown("### Resultado da avaliação")
                     st.markdown(f'<div class="result-box">{resultado}</div>', unsafe_allow_html=True)
@@ -469,7 +470,7 @@ with tab2:
             with st.spinner("Gerando código CMS..."):
                 try:
                     prompt_com_offering = PROMPT_CODIGO.replace("{offering}", offering_codigo)
-                    resultado = chamar_gemini(api_key, prompt_com_offering, artigo_codigo)
+                    resultado = chamar_api(api_key, prompt_com_offering, artigo_codigo)
                     st.markdown("---")
                     st.markdown("### Código gerado")
                     st.markdown(f'<div class="code-box">{resultado}</div>', unsafe_allow_html=True)
@@ -511,7 +512,7 @@ with tab3:
             with st.spinner("Classificando taxonomia..."):
                 try:
                     prompt_com_offering = PROMPT_TAXONOMIA.replace("{offering}", offering_tax)
-                    resultado = chamar_gemini(api_key, prompt_com_offering, artigo_tax)
+                    resultado = chamar_api(api_key, prompt_com_offering, artigo_tax)
                     st.markdown("---")
                     st.markdown("### Resultado da classificação")
                     st.markdown(f'<div class="code-box">{resultado}</div>', unsafe_allow_html=True)
